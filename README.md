@@ -1,56 +1,38 @@
-function levenshteinDistance(s1, s2) {
-    const len1 = s1.length;
-    const len2 = s2.length;
-    const matrix = [];
-
-    for (let i = 0; i <= len1; i++) {
-        matrix[i] = [i];
+function deepCompare(obj1, obj2, path = '') {
+    // Проверяем типы объектов
+    if (typeof obj1 !== 'object' || typeof obj2 !== 'object' || obj1 === null || obj2 === null) {
+        if (obj1 !== obj2) {
+            console.log(`Difference at ${path}: ${obj1} !== ${obj2}`);
+        }
+        return obj1 === obj2;
     }
 
-    for (let j = 0; j <= len2; j++) {
-        matrix[0][j] = j;
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    // Проверяем количество ключей
+    if (keys1.length !== keys2.length) {
+        console.log(`Difference at ${path}: Different number of keys`);
+        return false;
     }
 
-    for (let i = 1; i <= len1; i++) {
-        for (let j = 1; j <= len2; j++) {
-            const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1,
-                matrix[i][j - 1] + 1,
-                matrix[i - 1][j - 1] + cost
-            );
+    let isEqual = true;
+
+    // Проверяем каждый ключ и его соответствующее значение рекурсивно
+    for (const key of keys1) {
+        const currentPath = (path ? path + '.' : '') + key;
+        if (!keys2.includes(key)) {
+            console.log(`Difference at ${currentPath}: Key does not exist in second object`);
+            isEqual = false;
+        } else {
+            isEqual = deepCompare(obj1[key], obj2[key], currentPath) && isEqual;
         }
     }
 
-    return matrix[len1][len2];
-}
-
-function findDifferences(urls1, urls2) {
-    const differences = [];
-
-    urls1.forEach(url1 => {
-        let minDistance = Infinity;
-        let closestUrl = '';
-
-        urls2.forEach(url2 => {
-            const distance = levenshteinDistance(url1, url2);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestUrl = url2;
-            }
-        });
-
-        if (minDistance !== 0) {
-            differences.push({ url1, closestUrl });
-        }
-    });
-
-    return differences;
+    return isEqual;
 }
 
 // Пример использования
-const urls1 = ['http://example.com', 'http://example.org', 'http://example.net'];
-const urls2 = ['http://example.com', 'http://example.net', 'http://another-example.com'];
-
-const differences = findDifferences(urls1, urls2);
-console.log(differences);
+const obj1 = { a: 1, b: { c: 2, d: [3, 4] } };
+const obj2 = { a: 1, b: { c: 3, e: [3, 4] } };
+deepCompare(obj1, obj2);
